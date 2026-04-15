@@ -38,7 +38,7 @@ flutter run -d chrome
 ## Projectes relacionats
 
 - [IetiPark - App LibGDX](https://github.com/alejandroenti/IetiPark-AppLibgdx) — Joc principal desenvolupat amb LibGDX
-- [IetiPark - Server](https://github.com/alejandroenti/IetiPark-AppLibgdx) — Servidor de s'encarrega de la comunicació del joc IetiPark fent servir NodeJS
+- [IetiPark - Server](https://github.com/alejandroenti/IetiPark-AppLibgdx) — Servidor Node.js encarregat de la comunicació i la lògica del joc
 
 ## Llicència
 
