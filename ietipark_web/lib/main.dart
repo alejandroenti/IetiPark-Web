@@ -3,7 +3,11 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/status.dart' as status;
 import 'dart:convert';
 
-const String serverUrl = 'ws://localhost:3000'; // Cambia a tu URL del servidor WebSocket
+import 'package:flutter/foundation.dart' show kIsWeb;
+
+final String serverUrl = kIsWeb 
+    ? 'wss://pico1.ieti.site'
+    : 'ws://pico1.ieti.site';
 
 void main() {
   runApp(const MyApp());
@@ -194,7 +198,6 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 }
-
 class GameScenario extends StatelessWidget {
   final List<Map<String, dynamic>> clients;
   static const double gridSize = 10.0;
@@ -213,22 +216,62 @@ class GameScenario extends StatelessWidget {
           color: Colors.grey[100],
           child: Stack(
             children: [
-              // Grid de fondo
+              // 1. Imagen de fondo
+              Image.asset(
+                'assets/sprites/background.jpg',
+                fit: BoxFit.contain,
+                width: constraints.maxWidth,
+                height: constraints.maxHeight,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    color: Colors.grey[100],
+                    child: const Center(child: Text('Fondo no encontrado')),
+                  );
+                },
+              ),
+              
+              // 2. Grid de fondo
               CustomPaint(
                 painter: GridPainter(),
                 size: Size(constraints.maxWidth, constraints.maxHeight),
               ),
-              // Clientes
+
+              // // 3. Sprite Estático: Puerta (Cerrada)
+              // Positioned(
+              //   left: 736, // 10% del ancho
+              //   top: 0 , 
+              //   child: _buildStaticSprite(
+              //     'assets/sprites/door_closed.png',
+              //     96,
+              //     480,
+              //     Icons.door_back_door,
+              //     Colors.brown,
+              //   ),
+              // ),
+
+              // // 4. Sprite Estático: Llave
+              // Positioned(
+              //   right: constraints.maxWidth * 0.2, // 20% desde la derecha
+              //   bottom: constraints.maxHeight - 48*5,
+              //   child: _buildStaticSprite(
+              //     'assets/sprites/key.png',
+              //     64,
+              //     64,
+              //     Icons.vpn_key,
+              //     Colors.amber,
+              //   ),
+              // ),
+
+              // 5. Clientes dinámicos
               ...clients.map((client) {
-                final pixelX = (client['x'] as num).toDouble() / gridSize * constraints.maxWidth;
-                final pixelY = (client['y'] as num).toDouble() / gridSize * constraints.maxHeight;
+                final pixelX = (client['x'] as num).toDouble();
+                final pixelY = (client['y'] as num).toDouble() / gridSize * constraints.maxHeight + constraints.maxHeight - 96;
 
                 return Positioned(
                   left: pixelX - baseSize / 2,
                   top: pixelY - baseSize / 2,
                   child: Column(
                     children: [
-                      // Nombre del cliente
                       Text(
                         client['name'] as String,
                         style: const TextStyle(
@@ -238,22 +281,20 @@ class GameScenario extends StatelessWidget {
                         ),
                       ),
                       SizedBox(
-                        width: baseSize,
-                        height: baseSize,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.blue[400],
-                            border: Border.all(color: Colors.blue),
-                          ),
-                          child: Center(
-                            child: Text(
-                              (client['name'] as String).substring((client['name'] as String).lastIndexOf('_') + 1),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
+                        width: 96,
+                        height: 96,
+                        child: Image.asset(
+                          'assets/sprites/quixote_1.png',
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              decoration: BoxDecoration(
+                                color: Colors.blue[400],
+                                border: Border.all(color: Colors.blue),
                               ),
-                            ),
-                          ),
+                              child: const Center(child: Icon(Icons.person, color: Colors.white)),
+                            );
+                          },
                         ),
                       ),
                     ],
@@ -264,6 +305,21 @@ class GameScenario extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  // Helper para construir los sprites estáticos con manejo de errores
+  Widget _buildStaticSprite(String path, double width, double height, IconData fallbackIcon, Color fallbackColor) {
+    return SizedBox(
+      width: width,
+      height: height,
+      child: Image.asset(
+        path,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Icon(fallbackIcon, size: width, color: fallbackColor);
+        },
+      ),
     );
   }
 }
