@@ -212,96 +212,100 @@ class GameScenario extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        return Container(
-          color: Colors.grey[100],
-          child: Stack(
-            children: [
-              // 1. Imagen de fondo
-              Image.asset(
-                'assets/sprites/background.jpg',
-                fit: BoxFit.contain,
-                width: constraints.maxWidth,
-                height: constraints.maxHeight,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    color: Colors.grey[100],
-                    child: const Center(child: Text('Fondo no encontrado')),
-                  );
-                },
-              ),
-              
-              // 2. Grid de fondo
-              CustomPaint(
-                painter: GridPainter(),
-                size: Size(constraints.maxWidth, constraints.maxHeight),
-              ),
+        return FittedBox(
+          fit: BoxFit.contain,
+          child: SizedBox(
+            width: 800,
+            height: 480,
+            child: Stack(
+              children: [
+                // 1. Imagen de fondo
+                Image.asset(
+                  'assets/sprites/background.jpg',
+                  fit: BoxFit.fill,
+                  width: 800,
+                  height: 480,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      color: Colors.grey[100],
+                      child: const Center(child: Text('Fondo no encontrado')),
+                    );
+                  },
+                ),
+                
+                // 2. Grid de fondo
+                CustomPaint(
+                  painter: GridPainter(),
+                  size: Size(800, 480),
+                ),
 
-              // // 3. Sprite Estático: Puerta (Cerrada)
-              // Positioned(
-              //   left: 736, // 10% del ancho
-              //   top: 0 , 
-              //   child: _buildStaticSprite(
-              //     'assets/sprites/door_closed.png',
-              //     96,
-              //     480,
-              //     Icons.door_back_door,
-              //     Colors.brown,
-              //   ),
-              // ),
-
-              // // 4. Sprite Estático: Llave
-              // Positioned(
-              //   right: constraints.maxWidth * 0.2, // 20% desde la derecha
-              //   bottom: constraints.maxHeight - 48*5,
-              //   child: _buildStaticSprite(
-              //     'assets/sprites/key.png',
-              //     64,
-              //     64,
-              //     Icons.vpn_key,
-              //     Colors.amber,
-              //   ),
-              // ),
-
-              // 5. Clientes dinámicos
-              ...clients.map((client) {
-                final pixelX = (client['x'] as num).toDouble();
-                final pixelY = (client['y'] as num).toDouble() / gridSize * constraints.maxHeight + constraints.maxHeight - 96;
-
-                return Positioned(
-                  left: pixelX - baseSize / 2,
-                  top: pixelY - baseSize / 2,
-                  child: Column(
-                    children: [
-                      Text(
-                        client['name'] as String,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                          color: Colors.blue,
-                        ),
-                      ),
-                      SizedBox(
-                        width: 96,
-                        height: 96,
-                        child: Image.asset(
-                          'assets/sprites/quixote_1.png',
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              decoration: BoxDecoration(
-                                color: Colors.blue[400],
-                                border: Border.all(color: Colors.blue),
-                              ),
-                              child: const Center(child: Icon(Icons.person, color: Colors.white)),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
+                // 3. Sprite Estático: Puerta (Cerrada)
+                Positioned(
+                  left: 800 - 96, // Posición relativa al fondo
+                  top: 0,
+                  child: _buildStaticSprite(
+                    'assets/sprites/door_closed.png',
+                    96,
+                    480,
+                    Icons.door_back_door,
+                    Colors.brown,
                   ),
-                );
-              }).toList(),
-            ],
+                ),
+
+                // 4. Sprite Estático: Llave
+                Positioned(
+                  left: 100, // Posición relativa al fondo
+                  bottom: 100,
+                  child: _buildStaticSprite(
+                    'assets/sprites/key.png',
+                    64,
+                    32,
+                    Icons.vpn_key,
+                    Colors.amber,
+                  ),
+                ),
+
+                // 5. Clientes dinámicos
+                ...clients.map((client) {
+                  final pixelX = (client['x'] as num).toDouble() / 10 * 800;
+                  final pixelY = (client['y'] as num).toDouble() / 10 * 480;
+
+                  return Positioned(
+                    left: pixelX - 32 / 2,
+                    bottom: pixelY + 100,
+                    child: Column(
+                      children: [
+                        Text(
+                          client['name'] as String,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            color: Colors.blue,
+                          ),
+                        ),
+                        SizedBox(
+                          width: 32,
+                          height: 32,
+                          child: Image.asset(
+                            'assets/sprites/quixote_1.png',
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.blue[400],
+                                  border: Border.all(color: Colors.blue),
+                                ),
+                                child: const Center(child: Icon(Icons.person, color: Colors.white)),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ],
+            ),
           ),
         );
       },
