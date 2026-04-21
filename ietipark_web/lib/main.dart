@@ -267,8 +267,8 @@ class GameScenario extends StatelessWidget {
 
                 // 5. Clientes dinámicos
                 ...clients.map((client) {
-                  final pixelX = (client['x'] as num).toDouble() / 10 * 800;
-                  final pixelY = (client['y'] as num).toDouble() / 10 * 480;
+                  final pixelX = (client['x'] as num).toDouble();
+                  final pixelY = (client['y'] as num).toDouble();
 
                   return Positioned(
                     left: pixelX - 32 / 2,
