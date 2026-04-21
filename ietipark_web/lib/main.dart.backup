@@ -1,0 +1,329 @@
+import 'package:flutter/material.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:web_socket_channel/status.dart' as status;
+import 'dart:convert';
+
+const String serverUrl = 'ws://localhost:3000'; // Cambia a tu URL del servidor WebSocket
+
+void main() {
+  runApp(const MyApp());
+}
+
+mockJson() {
+    return {
+      "type": "GAME STATE",
+      "payload": [
+        {
+          "name": "cliente_1",
+          "x": 0,
+          "y": 0
+        },
+        {
+          "name": "cliente_2",
+          "x": 3.33,
+          "y": 4.44
+        },
+        {
+          "name": "cliente_3",
+          "x": 7.5,
+          "y": 2.5
+        }
+      ]
+    };
+  }
+/// Función para obtener el estado del juego desde el servidor Node.js
+Future<Map<String, dynamic>> getGameState() async {
+  try {
+    // return mockJson(); // Usar datos mock para desarrollo
+    final response = await http.get(
+      Uri.parse('$serverUrl/api/game-state'),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    ).timeout(
+      const Duration(seconds: 10),
+      onTimeout: () => throw Exception('Timeout al conectar con el servidor'),
+    );
+
+    if (response.statusCode == 200) {
+      // Decodificar y retornar el JSON
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    } else {
+      throw Exception('Error del servidor: ${response.statusCode}');
+    }
+  } catch (e) {
+    print('Error al obtener game state: $e');
+    rethrow;
+  }
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  
+
+  // This widget is the root of your application.
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'IetiPark Scenario',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+      ),
+      home: const MyHomePage(title: 'Game Scenario'),
+    );
+  }
+}
+
+class MyHomePage extends StatefulWidget {
+  const MyHomePage({super.key, required this.title});
+
+  final String title;
+
+  @override
+  State<MyHomePage> createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+  late List<Map<String, dynamic>> players;
+  late Map<String, dynamic> mapData;
+  bool isLoading = true;
+  String? errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadGameState();
+  }
+
+  Future<void> _loadGameState() async {
+    try {
+      final gameState = await getGameState();
+      final payload = gameState['payload'];
+      
+      setState(() {
+        mapData = payload['map'];
+        players = List<Map<String, dynamic>>.from(payload['players']);
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        errorMessage = 'Error: $e';
+        isLoading = false;
+      });
+      print('Error cargando game state: $e');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (isLoading) {
+      return Scaffold(
+        appBar: AppBar(
+          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+          title: Text(widget.title),
+        ),
+        body: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (errorMessage != null) {
+      return Scaffold(
+        appBar: AppBar(
+          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+          title: Text(widget.title),
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                errorMessage!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.red, fontSize: 16),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    isLoading = true;
+                    errorMessage = null;
+                  });
+                  _loadGameState();
+                },
+                child: const Text('Reintentar'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: Text(widget.title),
+      ),
+      body: GameScenario(players: players, mapData: mapData),
+    );
+  }
+}
+
+class GameScenario extends StatelessWidget {
+  final List<Map<String, dynamic>> players;
+  final Map<String, dynamic> mapData;
+  static const double gridSize = 10.0;
+  static const double baseSize = 32.0; // Tamaño base del sprite
+
+  const GameScenario({
+    super.key,
+    required this.players,
+    required this.mapData,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final mapWidth = (mapData['width'] as int).toDouble();
+    final mapHeight = (mapData['height'] as int).toDouble();
+    
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Calcular escala para mantener aspect ratio
+        final aspectRatio = mapWidth / mapHeight;
+        final availableWidth = constraints.maxWidth;
+        final availableHeight = constraints.maxHeight;
+        
+        late double displayWidth;
+        late double displayHeight;
+        
+        if (availableWidth / availableHeight > aspectRatio) {
+          // La pantalla es más ancha, ajustar por altura
+          displayHeight = availableHeight;
+          displayWidth = availableHeight * aspectRatio;
+        } else {
+          // La pantalla es más alta, ajustar por ancho
+          displayWidth = availableWidth;
+          displayHeight = availableWidth / aspectRatio;
+        }
+        
+        // Calcular escala de sprites basado en el tamaño de pantalla
+        final scale = displayWidth / mapWidth;
+        final spriteSize = baseSize * scale;
+        
+        return Center(
+          child: Container(
+            width: displayWidth,
+            height: displayHeight,
+            color: Colors.grey[100],
+            child: Stack(
+              children: [
+                // Imagen de fondo del mapa
+                Image.asset(
+                  mapData['background'] as String,
+                  fit: BoxFit.cover,
+                  width: displayWidth,
+                  height: displayHeight,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      color: Colors.grey[100],
+                      child: Center(
+                        child: Text('Fondo no encontrado: ${mapData['background']}'),
+                      ),
+                    );
+                  },
+                ),
+                // Grid de fondo
+                CustomPaint(
+                  painter: GridPainter(),
+                  size: Size(displayWidth, displayHeight),
+                ),
+                // Personajes con sprites
+                ...players.map((player) {
+                  final pixelX = (player['x'] as double) / gridSize * displayWidth;
+                  final pixelY = (player['y'] as double) / gridSize * displayHeight;
+
+                return Positioned(
+                  left: pixelX - spriteSize / 2,
+                  top: pixelY - spriteSize / 2,
+                  child: Column(
+                    children: [
+                      // Nombre del personaje
+                      // Text(
+                      //   player['player'] as String,
+                      //   style: const TextStyle(
+                      //     fontWeight: FontWeight.bold,
+                      //     fontSize: 12,
+                      //     color: Colors.blue,
+                      //   ),
+                      // ),
+                      SizedBox(
+                        width: spriteSize,
+                        height: spriteSize,
+                        child: Image.asset(
+                          player['sprite'] as String,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) {
+                            // Si la imagen no existe, mostrar un placeholder
+                            return Container(
+                              decoration: BoxDecoration(
+                                color: Colors.blue[400],
+                                border: Border.all(color: Colors.blue),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  (player['player'] as String).substring(0, 1),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+                ],
+              ),
+            ),
+          );
+      },
+    );
+  }
+}
+
+class GridPainter extends CustomPainter {
+  static const double gridSize = 10.0;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.grey[300]!
+      ..strokeWidth = 0.5;
+
+    final cellWidth = size.width / gridSize;
+    final cellHeight = size.height / gridSize;
+
+    // Líneas verticales
+    for (int i = 0; i <= gridSize.toInt(); i++) {
+      final x = i * cellWidth;
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+
+    // Líneas horizontales
+    for (int i = 0; i <= gridSize.toInt(); i++) {
+      final y = i * cellHeight;
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(GridPainter oldDelegate) => false;
+}
+
