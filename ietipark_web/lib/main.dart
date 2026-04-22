@@ -289,6 +289,8 @@ class GameScenario extends StatelessWidget {
                           child: Image.asset(
                             'assets/sprites/quixote_1.png',
                             fit: BoxFit.cover,
+                            isAntiAlias: false,
+                            filterQuality: FilterQuality.none,
                             errorBuilder: (context, error, stackTrace) {
                               return Container(
                                 decoration: BoxDecoration(
@@ -318,6 +320,7 @@ class GameScenario extends StatelessWidget {
       width: width,
       height: height,
       child: Image.asset(
+        filterQuality: FilterQuality.none,
         path,
         fit: BoxFit.cover,
         errorBuilder: (context, error, stackTrace) {
