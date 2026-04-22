@@ -284,8 +284,8 @@ class GameScenario extends StatelessWidget {
                           ),
                         ),
                         SizedBox(
-                          width: 32,
-                          height: 32,
+                          width: 96,
+                          height: 96,
                           child: Image.asset(
                             'assets/sprites/quixote_1.png',
                             fit: BoxFit.cover,
