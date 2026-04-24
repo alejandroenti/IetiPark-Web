@@ -1,0 +1,163 @@
+{
+  "name": "IetiPark",
+  "description": "Don Quixote",
+  "levels": [
+    {
+      "name": "main",
+      "description": "",
+      "gameplayData": "",
+      "layers": [
+        {
+          "name": "main",
+          "gameplayData": "",
+          "x": 0,
+          "y": 0,
+          "depth": 0.0,
+          "tilesSheetFile": "media/atlas.png",
+          "tilesWidth": 32,
+          "tilesHeight": 32,
+          "visible": true,
+          "groupId": "__main__",
+          "tileMapFile": "tilemaps/level_000_layer_000.json"
+        },
+        {
+          "name": "clouds",
+          "gameplayData": "",
+          "x": 0,
+          "y": 0,
+          "depth": 0.0,
+          "tilesSheetFile": "media/cloud_2.png",
+          "tilesWidth": 119,
+          "tilesHeight": 63,
+          "visible": true,
+          "groupId": "__main__",
+          "tileMapFile": "tilemaps/level_000_layer_001.json"
+        },
+        {
+          "name": "bg",
+          "gameplayData": "",
+          "x": 0,
+          "y": 0,
+          "depth": 0.0,
+          "tilesSheetFile": "media/sky_1.png",
+          "tilesWidth": 960,
+          "tilesHeight": 540,
+          "visible": true,
+          "groupId": "__main__",
+          "tileMapFile": "tilemaps/level_000_layer_002.json"
+        }
+      ],
+      "layerGroups": [
+        {
+          "id": "__main__",
+          "name": "Main",
+          "collapsed": false
+        }
+      ],
+      "sprites": [
+        {
+          "name": "quixote",
+          "gameplayData": "",
+          "type": "quixote",
+          "animationId": "anim_1776702618726446",
+          "x": 0,
+          "y": 0,
+          "width": 32,
+          "height": 32,
+          "imageFile": "media/quixote_1.png",
+          "flipX": false,
+          "flipY": false,
+          "depth": 0.0,
+          "groupId": "__main__"
+        }
+      ],
+      "spriteGroups": [
+        {
+          "id": "__main__",
+          "name": "Main",
+          "collapsed": false
+        }
+      ],
+      "groupId": "__main__",
+      "viewportWidth": 320,
+      "viewportHeight": 180,
+      "viewportX": 0,
+      "viewportY": 0,
+      "viewportAdaptation": "letterbox",
+      "viewportInitialColor": "green",
+      "viewportPreviewColor": "blue",
+      "backgroundColorHex": "#C4D2E3",
+      "depthSensitivity": 0.08,
+      "zonesFile": "zones/level_000_zones.json",
+      "pathsFile": "paths/level_000_paths.json"
+    }
+  ],
+  "levelGroups": [
+    {
+      "id": "__main__",
+      "name": "Main",
+      "collapsed": false
+    }
+  ],
+  "mediaAssets": [
+    {
+      "name": "quixote_idle",
+      "fileName": "media/quixote_1.png",
+      "mediaType": "spritesheet",
+      "tileWidth": 32,
+      "tileHeight": 32,
+      "selectionColorHex": "#FFCC00",
+      "groupId": "__main__"
+    },
+    {
+      "name": "quixote_walk_sheet_1",
+      "fileName": "media/quixote_walk_sheet_1.png",
+      "mediaType": "spritesheet",
+      "tileWidth": 32,
+      "tileHeight": 32,
+      "selectionColorHex": "#FFCC00",
+      "groupId": "__main__"
+    },
+    {
+      "name": "atlas",
+      "fileName": "media/atlas.png",
+      "mediaType": "atlas",
+      "tileWidth": 32,
+      "tileHeight": 32,
+      "selectionColorHex": "#FFCC00",
+      "groupId": "__main__"
+    },
+    {
+      "name": "sky_1",
+      "fileName": "media/sky_1.png",
+      "mediaType": "tileset",
+      "tileWidth": 960,
+      "tileHeight": 540,
+      "selectionColorHex": "#FFCC00",
+      "groupId": "__main__"
+    },
+    {
+      "name": "cloud_2",
+      "fileName": "media/cloud_2.png",
+      "mediaType": "tileset",
+      "tileWidth": 119,
+      "tileHeight": 63,
+      "selectionColorHex": "#FFCC00",
+      "groupId": "__main__"
+    }
+  ],
+  "mediaGroups": [
+    {
+      "id": "__main__",
+      "name": "Main",
+      "collapsed": false
+    }
+  ],
+  "zoneTypes": [
+    {
+      "name": "Default",
+      "color": "blue"
+    }
+  ],
+  "animationsFile": "animations/animations.json"
+}

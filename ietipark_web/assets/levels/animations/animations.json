@@ -1,0 +1,64 @@
+{
+  "animationGroups": [
+    {
+      "id": "__main__",
+      "name": "Main",
+      "collapsed": false
+    }
+  ],
+  "animations": [
+    {
+      "id": "anim_1776702618726446",
+      "name": "quixote_idle_anim",
+      "mediaFile": "media/quixote_1.png",
+      "startFrame": 0,
+      "endFrame": 0,
+      "fps": 12.0,
+      "loop": true,
+      "groupId": "__main__",
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "anchorColor": "red",
+      "hitBoxes": [],
+      "frameRigs": [
+        {
+          "frame": 0,
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "anchorColor": "red",
+          "hitBoxes": []
+        }
+      ]
+    },
+    {
+      "id": "anim_1776702668697288",
+      "name": "quixote_walk",
+      "mediaFile": "media/quixote_walk_sheet_1.png",
+      "startFrame": 0,
+      "endFrame": 1,
+      "fps": 4.0,
+      "loop": true,
+      "groupId": "__main__",
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "anchorColor": "red",
+      "hitBoxes": [],
+      "frameRigs": [
+        {
+          "frame": 0,
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "anchorColor": "red",
+          "hitBoxes": []
+        },
+        {
+          "frame": 1,
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "anchorColor": "red",
+          "hitBoxes": []
+        }
+      ]
+    }
+  ]
+}
