@@ -8,40 +8,38 @@ import 'package:flutter/services.dart';
 import 'package:ietipark_web/gt_compat/test.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
-// ── Importa tus modelos ──────────────────────────────────
-// import 'game_data.dart'; // descomenta si están en otro archivo
-
-final String serverUrl = kIsWeb
-    ? 'wss://pico1.ieti.site'
-    : 'ws://pico1.ieti.site';
+final String serverUrl = 'ws://localhost:3000';
 
 void main() {
   runApp(const MyApp());
 }
 
-mockJson() {
-  return {
-    "type": "GAME STATE",
-    "payload": [
-      {"name": "cliente_1", "x": 0, "y": 0},
-      {"name": "cliente_2", "x": 3.33, "y": 4.44},
-      {"name": "cliente_3", "x": 7.5, "y": 2.5},
-    ],
-  };
-}
-
-// ── Loader del JSON ──────────────────────────────────────
 Future<GameData> loadGameData() async {
   final String response =
-      await rootBundle.loadString('assets/levels/game_data.json');
+      await rootBundle.loadString('assets/game_data.json');
   final Map<String, dynamic> json = jsonDecode(response);
   return GameData.fromJson(json);
 }
 
 Future<TileMap> loadTileMap(String path) async {
-  final String response = await rootBundle.loadString('assets/levels/$path');
+  final String response = await rootBundle.loadString('assets/$path');
   final Map<String, dynamic> json = jsonDecode(response);
   return TileMap.fromJson(json);
+}
+
+// ── Datos cargados para una TileLayer ─────────────────────
+class LoadedLayer {
+  final TileLayer layer;
+  final TileMap tileMap;
+  final ui.Image atlas;
+  final int atlasColumns;
+
+  const LoadedLayer({
+    required this.layer,
+    required this.tileMap,
+    required this.atlas,
+    required this.atlasColumns,
+  });
 }
 
 class MyApp extends StatelessWidget {
@@ -70,12 +68,11 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  late List<Map<String, dynamic>> clients;
+  List<Map<String, dynamic>> clients = [];
+  Map<String, dynamic> currentLevel = {};
   WebSocketChannel? _channel;
   bool isLoading = true;
   String? errorMessage;
-
-  // ── Nuevo: estado del GameData ───────────────────────
   GameData? gameData;
 
   @override
@@ -84,14 +81,12 @@ class _MyHomePageState extends State<MyHomePage> {
     _loadGameDataAndConnect();
   }
 
-  // ── Carga el JSON primero, luego conecta el WebSocket ─
   Future<void> _loadGameDataAndConnect() async {
     try {
       final data = await loadGameData();
       setState(() => gameData = data);
     } catch (e) {
       print('Error cargando game_data.json: $e');
-      // Continúa sin gameData; los sprites usarán fallback
     }
     _connectWebSocket();
   }
@@ -102,10 +97,13 @@ class _MyHomePageState extends State<MyHomePage> {
       _channel!.stream.listen(
         (message) {
           try {
+            print('Mensaje WebSocket recibido: $message');
             final data = jsonDecode(message) as Map<String, dynamic>;
             if (data['type'] == 'GAME STATE') {
+              final payload = data['payload'] as Map<String, dynamic>;
               setState(() {
-                clients = List<Map<String, dynamic>>.from(data['payload']);
+                clients = List<Map<String, dynamic>>.from(payload['players']);
+                currentLevel = Map<String, dynamic>.from(payload['currentLevel']);
                 isLoading = false;
                 errorMessage = null;
               });
@@ -134,21 +132,12 @@ class _MyHomePageState extends State<MyHomePage> {
         errorMessage = 'Error al conectar: $e';
         isLoading = false;
       });
-      _loadMockData();
     }
   }
 
   void _reconnectWebSocket() {
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) _connectWebSocket();
-    });
-  }
-
-  void _loadMockData() {
-    final mockData = mockJson();
-    setState(() {
-      clients = List<Map<String, dynamic>>.from(mockData['payload']);
-      isLoading = false;
     });
   }
 
@@ -207,22 +196,26 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.title),
       ),
-      // ── Pasa gameData a GameScenario ─────────────────
-      body: GameScenario(clients: clients, gameData: gameData),
+      body: GameScenario(
+        clients: clients,
+        gameData: gameData,
+        currentLevel: currentLevel,
+      ),
     );
   }
 }
 
-// ── GameScenario usa GameData para dibujar ────────────────
-// ── GameScenario ─────────────────────────────────────────
+// ── GameScenario ──────────────────────────────────────────
 class GameScenario extends StatefulWidget {
   final List<Map<String, dynamic>> clients;
   final GameData? gameData;
+  final Map<String, dynamic> currentLevel;
 
   const GameScenario({
     super.key,
     required this.clients,
     this.gameData,
+    this.currentLevel = const {},
   });
 
   @override
@@ -230,18 +223,17 @@ class GameScenario extends StatefulWidget {
 }
 
 class _GameScenarioState extends State<GameScenario> {
-  
-  TileMap? tileMap;
-  ui.Image? atlasImage;
-  bool tileDataLoaded = false;
+  List<LoadedLayer?> _loadedLayers = [];
+  bool _layersReady = false;
+  Level? _activeLevel;
 
   double get viewportWidth =>
-      widget.gameData?.levels.first.viewportWidth.toDouble() ?? 800;
+      _activeLevel?.viewportWidth.toDouble() ?? 800;
   double get viewportHeight =>
-      widget.gameData?.levels.first.viewportHeight.toDouble() ?? 480;
+      _activeLevel?.viewportHeight.toDouble() ?? 480;
 
   Color get backgroundColor {
-    final hex = widget.gameData?.levels.first.backgroundColorHex ?? '#CCCCCC';
+    final hex = _activeLevel?.backgroundColorHex ?? '#CCCCCC';
     final buffer = StringBuffer()
       ..write('ff')
       ..write(hex.replaceFirst('#', ''));
@@ -251,53 +243,113 @@ class _GameScenarioState extends State<GameScenario> {
   @override
   void initState() {
     super.initState();
-    _loadTileData();
+    _resolveActiveLevel();
+    _loadAllLayers();
   }
 
-  Future<void> _loadTileData() async {
-    final level = widget.gameData?.levels.first;
-    final layer = level?.layers.first;
-    if (layer == null) return;
+  @override
+  void didUpdateWidget(GameScenario oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final newLevelName = widget.currentLevel['name'] as String?;
+    final oldLevelName = oldWidget.currentLevel['name'] as String?;
+    if (newLevelName != oldLevelName) {
+      _resolveActiveLevel();
+      _loadAllLayers();
+    }
+  }
 
+  void _resolveActiveLevel() {
+    final currentLevelName = widget.currentLevel['name'] as String?;
+    _activeLevel = widget.gameData?.levels.firstWhere(
+      (l) => l.name == currentLevelName,
+      orElse: () => widget.gameData!.levels.first,
+    );
+  }
+
+  Future<void> _loadAllLayers() async {
+    if (_activeLevel == null) {
+      setState(() => _layersReady = true);
+      return;
+    }
+
+    setState(() => _layersReady = false);
+
+    final layers = _activeLevel!.layers
+        .where((l) => l.visible)
+        .toList()
+        .reversed
+        .toList();
+
+    final futures = layers.map(_loadSingleLayer).toList();
+    final results = await Future.wait(futures);
+
+    if (mounted) {
+      setState(() {
+        _loadedLayers = results;
+        _layersReady = true;
+      });
+    }
+  }
+
+  Future<LoadedLayer?> _loadSingleLayer(TileLayer tileLayer) async {
     try {
-      // Carga el tileMap JSON
-      final loadedTileMap = await loadTileMap(layer.tileMapFile);
-
-      // Carga el atlas como ui.Image para poder recortarlo
-      final ByteData data = await rootBundle.load('assets/levels/${layer.tilesSheetFile}');
+      final tileMap = await loadTileMap(tileLayer.tileMapFile);
+      final ByteData data =
+          await rootBundle.load('assets/${tileLayer.tilesSheetFile}');
       final codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
       final frame = await codec.getNextFrame();
       final image = frame.image;
+      final atlasColumns = image.width ~/ tileLayer.tilesWidth;
 
-      setState(() {
-        tileMap = loadedTileMap;
-        atlasImage = image;
-        tileDataLoaded = true;
-      });
+      return LoadedLayer(
+        layer: tileLayer,
+        tileMap: tileMap,
+        atlas: image,
+        atlasColumns: atlasColumns,
+      );
     } catch (e) {
-      print('Error cargando tile data: $e');
-      setState(() => tileDataLoaded = true); // muestra escena sin tiles
+      print('Error cargando TileLayer "${tileLayer.name}": $e');
+      return null;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final level = widget.gameData?.levels.first;
-    final layer = level?.layers.first;
-    final staticSprites = level?.sprites
-            .where((s) => s.type != 'quixote')
-            .toList() ?? [];
+    final isKeyTaken = widget.currentLevel['isKeyTaken'] == true;
 
-    // Sprite quixote del JSON
-    final quixoteSprite = level?.sprites.firstWhere(
+    // Sprites estáticos: todo excepto quixote; oculta la llave si ya fue tomada
+    final staticSprites = _activeLevel?.sprites
+            .where((s) => s.type != 'quixote')
+            .where((s) => s.type != 'key' || !isKeyTaken)
+            .toList() ??
+        [];
+
+    final quixoteSprite = _activeLevel?.sprites.firstWhere(
       (s) => s.type == 'quixote',
       orElse: () => Sprite(
-        name: 'quixote', gameplayData: '', type: 'quixote',
-        animationId: '', x: 0, y: 0, width: 32, height: 32,
+        name: 'quixote',
+        gameplayData: '',
+        type: 'quixote',
+        animationId: '',
+        x: 0,
+        y: 0,
+        width: 32,
+        height: 32,
         imageFile: 'media/quixote_1.png',
-        flipX: false, flipY: false, depth: 0, groupId: '__main__',
+        flipX: false,
+        flipY: false,
+        depth: 0,
+        groupId: '__main__',
       ),
     );
+
+    // Llave para dibujar sobre el jugador que la lleva
+    final Sprite? keySprite = isKeyTaken
+        ? _activeLevel?.sprites.cast<Sprite?>().firstWhere(
+            (s) => s?.type == 'key',
+            orElse: () => null,
+          )
+        : null;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -308,53 +360,51 @@ class _GameScenarioState extends State<GameScenario> {
             height: viewportHeight,
             child: Stack(
               children: [
-                // 1. Color de fondo del JSON
+                // ── 1. Color de fondo ─────────────────────────────
                 Container(color: backgroundColor),
 
-                // 2. TileMap renderizado con el atlas
-                if (tileDataLoaded && tileMap != null && atlasImage != null && layer != null)
-                  CustomPaint(
-                    painter: TileMapPainter(
-                      tileMap: tileMap!,
-                      atlas: atlasImage!,
-                      tileWidth: layer.tilesWidth,
-                      tileHeight: layer.tilesHeight,
-                      // Columnas del atlas = ancho imagen / ancho tile
-                      atlasColumns: atlasImage!.width ~/ layer.tilesWidth,
-                    ),
-                    size: Size(viewportWidth, viewportHeight),
-                  ),
+                // ── 2. TileLayers en orden del JSON ───────────────
+                if (_layersReady)
+                  ..._loadedLayers.map((ll) {
+                    if (ll == null) return const SizedBox.shrink();
+                    return CustomPaint(
+                      painter: TileMapPainter(
+                        tileMap: ll.tileMap,
+                        atlas: ll.atlas,
+                        tileWidth: ll.layer.tilesWidth,
+                        tileHeight: ll.layer.tilesHeight,
+                        atlasColumns: ll.atlasColumns,
+                        offsetX: ll.layer.x.toDouble(),
+                        offsetY: ll.layer.y.toDouble(),
+                      ),
+                      size: Size(viewportWidth, viewportHeight),
+                    );
+                  }),
 
-                // 3. Grid
-                CustomPaint(
-                  painter: GridPainter(),
-                  size: Size(viewportWidth, viewportHeight),
-                ),
-
-                // 4. Sprites estáticos del JSON
+                // ── 3. Sprites estáticos del JSON ─────────────────
                 ...staticSprites.map((sprite) => Positioned(
                       left: sprite.x.toDouble(),
                       top: sprite.y.toDouble(),
                       child: _buildStaticSprite(
-                        'assets/levels/${sprite.imageFile}',
+                        'assets/${sprite.imageFile}',
                         sprite.width.toDouble(),
                         sprite.height.toDouble(),
                       ),
                     )),
 
-                // 5. Clientes dinámicos del WebSocket
+                // ── 4. Clientes dinámicos del WebSocket ───────────
                 ...widget.clients.map((client) {
                   final pixelX = (client['x'] as num).toDouble();
                   final pixelY = (client['y'] as num).toDouble();
-                  final spriteW = (quixoteSprite?.width ?? 32) * 3.0;
-                  final spriteH = (quixoteSprite?.height ?? 32) * 3.0;
-                  final imagePath =
-                      'assets/levels/${quixoteSprite?.imageFile ?? 'assets/levels/media/quixote_1.png'}';
+                  final spriteW = (quixoteSprite?.width ?? 32).toDouble();
+                  final spriteH = (quixoteSprite?.height ?? 32).toDouble();
+                  final hasKey = client['hasKey'] == true;
 
                   return Positioned(
                     left: pixelX - spriteW / 2,
-                    bottom: pixelY + 100,
+                    bottom: viewportHeight - pixelY,
                     child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
                           client['name'] as String,
@@ -364,22 +414,46 @@ class _GameScenarioState extends State<GameScenario> {
                             color: Colors.blue,
                           ),
                         ),
-                        SizedBox(
-                          width: spriteW,
-                          height: spriteH,
-                          child: Image.asset(
-                            imagePath,
-                            fit: BoxFit.cover,
-                            isAntiAlias: false,
-                            filterQuality: FilterQuality.none,
-                            errorBuilder: (_, __, ___) => Container(
-                              decoration: BoxDecoration(
-                                color: Colors.blue[400],
-                                border: Border.all(color: Colors.blue),
+                        Stack(
+                          clipBehavior: Clip.none,
+                          alignment: Alignment.topCenter,
+                          children: [
+                            // ── Personaje ─────────────────────────
+                            SizedBox(
+                              width: spriteW,
+                              height: spriteH,
+                              child: Image.asset(
+                                'assets/media/quixote_1.png',
+                                fit: BoxFit.cover,
+                                isAntiAlias: false,
+                                filterQuality: FilterQuality.none,
+                                errorBuilder: (_, __, ___) => Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue[400],
+                                    border: Border.all(color: Colors.blue),
+                                  ),
+                                  child: const Icon(Icons.person,
+                                      color: Colors.white),
+                                ),
                               ),
-                              child: const Icon(Icons.person, color: Colors.white),
                             ),
-                          ),
+                            // ── Llave encima del personaje ─────────
+                            if (hasKey && keySprite != null)
+                              Positioned(
+                                top: -keySprite.height.toDouble(),
+                                child: Image.asset(
+                                  'assets/${keySprite.imageFile}',
+                                  width: keySprite.width.toDouble(),
+                                  height: keySprite.height.toDouble(),
+                                  filterQuality: FilterQuality.none,
+                                  errorBuilder: (_, __, ___) => const Icon(
+                                    Icons.vpn_key,
+                                    size: 16,
+                                    color: Colors.yellow,
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                       ],
                     ),
@@ -414,7 +488,9 @@ class TileMapPainter extends CustomPainter {
   final ui.Image atlas;
   final int tileWidth;
   final int tileHeight;
-  final int atlasColumns; // cuántos tiles tiene el atlas por fila
+  final int atlasColumns;
+  final double offsetX;
+  final double offsetY;
 
   TileMapPainter({
     required this.tileMap,
@@ -422,24 +498,23 @@ class TileMapPainter extends CustomPainter {
     required this.tileWidth,
     required this.tileHeight,
     required this.atlasColumns,
+    this.offsetX = 0,
+    this.offsetY = 0,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()..filterQuality = FilterQuality.none;
-
     final rows = tileMap.tileMap;
 
     for (int row = 0; row < rows.length; row++) {
       for (int col = 0; col < rows[row].length; col++) {
         final tileIndex = rows[row][col];
-        if (tileIndex == -1) continue; // celda vacía
+        if (tileIndex == -1) continue;
 
-        // Posición del tile en el atlas (fila/columna dentro del spritesheet)
         final atlasCol = tileIndex % atlasColumns;
         final atlasRow = tileIndex ~/ atlasColumns;
 
-        // Recorte del atlas
         final src = Rect.fromLTWH(
           (atlasCol * tileWidth).toDouble(),
           (atlasRow * tileHeight).toDouble(),
@@ -447,10 +522,9 @@ class TileMapPainter extends CustomPainter {
           tileHeight.toDouble(),
         );
 
-        // Destino en el canvas
         final dst = Rect.fromLTWH(
-          (col * tileWidth).toDouble(),
-          (row * tileHeight).toDouble(),
+          offsetX + (col * tileWidth).toDouble(),
+          offsetY + (row * tileHeight).toDouble(),
           tileWidth.toDouble(),
           tileHeight.toDouble(),
         );
@@ -462,9 +536,13 @@ class TileMapPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(TileMapPainter old) =>
-      old.tileMap != tileMap || old.atlas != atlas;
+      old.tileMap != tileMap ||
+      old.atlas != atlas ||
+      old.offsetX != offsetX ||
+      old.offsetY != offsetY;
 }
 
+// ── GridPainter ───────────────────────────────────────────
 class GridPainter extends CustomPainter {
   static const double gridSize = 10.0;
 

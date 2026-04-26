@@ -264,7 +264,7 @@ class Group {
 
 Future<GameData> loadGameData() async {
   final String response =
-      await rootBundle.loadString('assets/levels/game_data.json');
+      await rootBundle.loadString('assets/game_data.json');
   final Map<String, dynamic> json = jsonDecode(response);
   return GameData.fromJson(json);
 }

@@ -1,0 +1,66 @@
+{
+  "zoneGroups": [
+    {
+      "id": "__main__",
+      "name": "Main",
+      "collapsed": false
+    }
+  ],
+  "zones": [
+    {
+      "name": "ground",
+      "type": "Default",
+      "gameplayData": "",
+      "x": 0,
+      "y": 354,
+      "width": 384,
+      "height": 158,
+      "color": "blue",
+      "groupId": "__main__"
+    },
+    {
+      "name": "ground",
+      "type": "Default",
+      "gameplayData": "",
+      "x": 672,
+      "y": 354,
+      "width": 352,
+      "height": 158,
+      "color": "blue",
+      "groupId": "__main__"
+    },
+    {
+      "name": "invisible_wall1",
+      "type": "Default",
+      "gameplayData": "",
+      "x": -51,
+      "y": -15,
+      "width": 53,
+      "height": 532,
+      "color": "blue",
+      "groupId": "__main__"
+    },
+    {
+      "name": "invisible_wall2",
+      "type": "Default",
+      "gameplayData": "",
+      "x": 1021,
+      "y": -18,
+      "width": 53,
+      "height": 532,
+      "color": "blue",
+      "groupId": "__main__"
+    },
+    {
+      "name": "dead_zone",
+      "type": "Default",
+      "gameplayData": "",
+      "x": 384,
+      "y": 448,
+      "width": 288,
+      "height": 64,
+      "color": "blue",
+      "groupId": "__main__"
+    }
+  ]
+}

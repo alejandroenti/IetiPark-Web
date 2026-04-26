@@ -1,0 +1,180 @@
+{
+  "animationGroups": [
+    {
+      "id": "__main__",
+      "name": "Main",
+      "collapsed": false
+    }
+  ],
+  "animations": [
+    {
+      "id": "anim_1776702618726446",
+      "name": "quixote_idle_anim",
+      "mediaFile": "media/quixote_1.png",
+      "startFrame": 0,
+      "endFrame": 0,
+      "fps": 12.0,
+      "loop": true,
+      "groupId": "__main__",
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "anchorColor": "red",
+      "hitBoxes": [
+        {
+          "id": "__hb_1777110799928675_0",
+          "name": "Hit Box 1",
+          "color": "green",
+          "x": 0.03125,
+          "y": 0.03125,
+          "width": 0.9375,
+          "height": 0.90625
+        }
+      ],
+      "frameRigs": [
+        {
+          "frame": 0,
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "anchorColor": "red",
+          "hitBoxes": [
+            {
+              "id": "__hb_1777110799928675_0",
+              "name": "Hit Box 1",
+              "color": "green",
+              "x": 0.03125,
+              "y": 0.03125,
+              "width": 0.9375,
+              "height": 0.90625
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "anim_1776702668697288",
+      "name": "quixote_walk",
+      "mediaFile": "media/quixote_walk_sheet_1.png",
+      "startFrame": 0,
+      "endFrame": 1,
+      "fps": 4.0,
+      "loop": true,
+      "groupId": "__main__",
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "anchorColor": "red",
+      "hitBoxes": [
+        {
+          "id": "__hb_1777110805883358_0",
+          "name": "Hit Box 1",
+          "color": "green",
+          "x": 0.03125,
+          "y": 0.03125,
+          "width": 0.9375,
+          "height": 0.90625
+        }
+      ],
+      "frameRigs": [
+        {
+          "frame": 0,
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "anchorColor": "red",
+          "hitBoxes": [
+            {
+              "id": "__hb_1777110805883358_0",
+              "name": "Hit Box 1",
+              "color": "green",
+              "x": 0.03125,
+              "y": 0.03125,
+              "width": 0.9375,
+              "height": 0.90625
+            }
+          ]
+        },
+        {
+          "frame": 1,
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "anchorColor": "red",
+          "hitBoxes": [
+            {
+              "id": "__hb_1777110805883358_0",
+              "name": "Hit Box 1",
+              "color": "green",
+              "x": 0.03125,
+              "y": 0.03125,
+              "width": 0.9375,
+              "height": 0.90625
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "anim_1777109640731538",
+      "name": "door_closed",
+      "mediaFile": "media/door_open.png",
+      "startFrame": 0,
+      "endFrame": 0,
+      "fps": 12.0,
+      "loop": true,
+      "groupId": "__main__",
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "anchorColor": "red",
+      "hitBoxes": [
+        {
+          "id": "__hb_1777109647095234_0",
+          "name": "Hit Box 1",
+          "color": "green",
+          "x": 0.0,
+          "y": 0.0,
+          "width": 0.90625,
+          "height": 1.0
+        }
+      ],
+      "frameRigs": [
+        {
+          "frame": 0,
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "anchorColor": "red",
+          "hitBoxes": [
+            {
+              "id": "__hb_1777109647095234_0",
+              "name": "Hit Box 1",
+              "color": "green",
+              "x": 0.0,
+              "y": 0.0,
+              "width": 0.90625,
+              "height": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "anim_1777126917108904",
+      "name": "key",
+      "mediaFile": "media/key.png",
+      "startFrame": 0,
+      "endFrame": 0,
+      "fps": 12.0,
+      "loop": true,
+      "groupId": "__main__",
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "anchorColor": "red",
+      "hitBoxes": [],
+      "frameRigs": [
+        {
+          "frame": 0,
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "anchorColor": "red",
+          "hitBoxes": []
+        }
+      ]
+    }
+  ]
+}
