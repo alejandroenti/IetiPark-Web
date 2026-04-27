@@ -48,12 +48,12 @@
           "name": "door",
           "gameplayData": "",
           "type": "door",
-          "animationId": "anim_1777109640731538",
+          "animationId": "anim_1777301541187617",
           "x": 560,
           "y": 336,
           "width": 32,
           "height": 32,
-          "imageFile": "media/door_open.png",
+          "imageFile": "media/door_anim.png",
           "flipX": false,
           "flipY": false,
           "depth": 0.0,
@@ -69,6 +69,21 @@
           "width": 32,
           "height": 16,
           "imageFile": "media/key.png",
+          "flipX": false,
+          "flipY": false,
+          "depth": 0.0,
+          "groupId": "__main__"
+        },
+        {
+          "name": "door_open",
+          "gameplayData": "",
+          "type": "door_open",
+          "animationId": "anim_1777299796439856",
+          "x": 24,
+          "y": 622,
+          "width": 32,
+          "height": 32,
+          "imageFile": "media/door_open2.png",
           "flipX": false,
           "flipY": false,
           "depth": 0.0,
@@ -225,7 +240,7 @@
       "groupId": "__main__"
     },
     {
-      "name": "door_open",
+      "name": "door_closed",
       "fileName": "media/door_open.png",
       "mediaType": "spritesheet",
       "tileWidth": 32,
@@ -248,6 +263,24 @@
       "mediaType": "spritesheet",
       "tileWidth": 32,
       "tileHeight": 16,
+      "selectionColorHex": "#FFCC00",
+      "groupId": "__main__"
+    },
+    {
+      "name": "door_open",
+      "fileName": "media/door_open2.png",
+      "mediaType": "spritesheet",
+      "tileWidth": 32,
+      "tileHeight": 32,
+      "selectionColorHex": "#FFCC00",
+      "groupId": "__main__"
+    },
+    {
+      "name": "door_anim",
+      "fileName": "media/door_anim.png",
+      "mediaType": "spritesheet",
+      "tileWidth": 32,
+      "tileHeight": 32,
       "selectionColorHex": "#FFCC00",
       "groupId": "__main__"
     }
