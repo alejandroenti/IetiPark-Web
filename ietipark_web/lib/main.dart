@@ -789,7 +789,7 @@ class _AnimatedSpriteById extends StatefulWidget {
 }
 
 class _AnimatedSpriteByIdState extends State<_AnimatedSpriteById>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   LoadedAnimation? _idleAnim;
   LoadedAnimation? _walkAnim;
   bool _loading = true;
