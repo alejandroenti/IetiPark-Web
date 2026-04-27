@@ -262,43 +262,26 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     if (isLoading) {
       return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-          title: Text(widget.title),
-        ),
+        // appBar: AppBar(
+        //   backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        //   title: Text(widget.title),
+        // ),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     if (errorMessage != null) {
       return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-          title: Text(widget.title),
-        ),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                errorMessage!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.red, fontSize: 16),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    isLoading = true;
-                    errorMessage = null;
-                  });
-                  _connectWebSocket();
-                },
-                child: const Text('Reintentar'),
-              ),
-            ],
-          ),
-        ),
+        // appBar: AppBar(
+        //   backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        //   title: Text(widget.title),
+        // ),
+        body: GameScenario(
+      clients: clients,
+      gameData: gameData,
+      animationsData: animationsData,
+      currentLevel: currentLevel,
+    ),
       );
     }
 
@@ -385,7 +368,6 @@ class _GameScenarioState extends State<GameScenario> {
     );
   }
 
-  // ── Precarga las animaciones de los sprites del nivel activo ──
   Future<void> _preloadSpriteAnimations() async {
     if (_activeLevel == null || widget.animationsData == null) return;
 
@@ -408,9 +390,6 @@ class _GameScenarioState extends State<GameScenario> {
     }
   }
 
-  /// Carga el spritesheet de una animación y calcula el tamaño de frame.
-  /// [spriteW] y [spriteH] son las dimensiones del sprite en el JSON del nivel
-  /// y se usan como tamaño de frame cuando la imagen tiene un solo frame.
   Future<LoadedAnimation?> _loadAnimation(
       AnimationDef def, int spriteW, int spriteH) async {
     try {
@@ -421,10 +400,6 @@ class _GameScenarioState extends State<GameScenario> {
       final frame = await codec.getNextFrame();
       final image = frame.image;
 
-      // El frame width = ancho del tile definido en mediaAssets.
-      // Lo calculamos dividiendo el sheet entre el número total de frames
-      // posibles en horizontal usando el spriteW del sprite JSON como tile.
-      // Si no encaja, usamos el ancho completo de la imagen.
       final totalFrames = def.endFrame + 1;
       final frameWidth = (image.width / totalFrames).round();
       final frameHeight = image.height;
@@ -526,166 +501,151 @@ class _GameScenarioState extends State<GameScenario> {
           )
         : null;
 
+    // --- CAMBIO PARA EXPANSIÓN TOTAL ---
     return LayoutBuilder(
       builder: (context, constraints) {
-        return FittedBox(
-          fit: BoxFit.contain,
-          child: SizedBox(
-            width: viewportWidth,
-            height: viewportHeight,
-            child: Stack(
-              children: [
-                // ── 1. Color de fondo ─────────────────────────────
-                Container(color: backgroundColor),
+        return Container(
+          width: constraints.maxWidth,
+          height: constraints.maxHeight,
+          color: Colors.black, // Color para las barras de aspecto (letterbox)
+          child: Center(
+            child: FittedBox(
+              fit: BoxFit.contain, // Escala todo manteniendo la proporción
+              child: SizedBox(
+                width: viewportWidth,
+                height: viewportHeight,
+                child: Stack(
+                  children: [
+                    // 1. Fondo
+                    Container(color: backgroundColor),
 
-                // ── 2. TileLayers ─────────────────────────────────
-                if (_layersReady)
-                  ..._loadedLayers.map((ll) {
-                    if (ll == null) return const SizedBox.shrink();
-                    return CustomPaint(
-                      painter: TileMapPainter(
-                        tileMap: ll.tileMap,
-                        atlas: ll.atlas,
-                        tileWidth: ll.layer.tilesWidth,
-                        tileHeight: ll.layer.tilesHeight,
-                        atlasColumns: ll.atlasColumns,
-                        offsetX: ll.layer.x.toDouble(),
-                        offsetY: ll.layer.y.toDouble(),
+                    // 2. Capas de Tiles (se escalan automáticamente por el FittedBox)
+                    if (_layersReady)
+                      ..._loadedLayers.map((ll) {
+                        if (ll == null) return const SizedBox.shrink();
+                        return CustomPaint(
+                          painter: TileMapPainter(
+                            tileMap: ll.tileMap,
+                            atlas: ll.atlas,
+                            tileWidth: ll.layer.tilesWidth,
+                            tileHeight: ll.layer.tilesHeight,
+                            atlasColumns: ll.atlasColumns,
+                            offsetX: ll.layer.x.toDouble(),
+                            offsetY: ll.layer.y.toDouble(),
+                          ),
+                          size: Size(viewportWidth, viewportHeight),
+                        );
+                      }),
+
+                    // 3. Sprites estáticos
+                    ...staticSprites.map((sprite) {
+                      final loadedAnim = sprite.animationId.isNotEmpty
+                          ? _animCache[sprite.animationId]
+                          : null;
+
+                      if (sprite.type == 'door' && loadedAnim != null) {
+                        final doorAnimDef = widget.animationsData?.findById(sprite.animationId);
+                        if (doorAnimDef != null) {
+                          final frameIndex = isDoorOpen ? 1 : 0;
+                          return Positioned(
+                            left: sprite.x.toDouble() - sprite.width.toDouble() * (doorAnimDef.anchorX),
+                            top: sprite.y.toDouble() - sprite.height.toDouble() * (doorAnimDef.anchorY),
+                            child: CustomPaint(
+                              painter: _SpritePainter(
+                                loadedAnim: loadedAnim,
+                                frame: frameIndex,
+                                flipX: sprite.flipX,
+                                flipY: sprite.flipY,
+                              ),
+                              size: Size(sprite.width.toDouble(), sprite.height.toDouble()),
+                            ),
+                          );
+                        }
+                      }
+
+                      return Positioned(
+                        left: sprite.x.toDouble() - sprite.width.toDouble() * (loadedAnim?.def.anchorX ?? 0.5),
+                        top: sprite.y.toDouble() - sprite.height.toDouble() * (loadedAnim?.def.anchorY ?? 0.5),
+                        child: loadedAnim != null
+                            ? _AnimatedSprite(
+                                loadedAnim: loadedAnim,
+                                displayWidth: sprite.width.toDouble(),
+                                displayHeight: sprite.height.toDouble(),
+                                flipX: sprite.flipX,
+                                flipY: sprite.flipY,
+                              )
+                            : _buildStaticSprite(
+                                'assets/${sprite.imageFile}',
+                                sprite.width.toDouble(),
+                                sprite.height.toDouble(),
+                              ),
+                      );
+                    }),
+
+                    // 4. Jugadores (WebSocket)
+                                      ...widget.clients.map((client) {
+                    // 1. Asegúrate de tener un identificador único para el ValueKey
+                    // Si tu backend envía un 'id', úsalo. Si no, usa el 'name' (asumiendo que es único).
+                    final uniqueId = client['id'] ?? client['name'];
+
+                    final hasCompleted = client['hasCompletedLevel'] == true;
+                    if (hasCompleted) {
+                      // 2. Añade la key también al SizedBox si el jugador ya completó el nivel
+                      return SizedBox.shrink(key: ValueKey('completed_$uniqueId'));
+                    }
+
+                    final pixelX = (client['x'] as num).toDouble();
+                    final pixelY = (client['y'] as num).toDouble() - (quixoteSprite?.height.toDouble() ?? 32) / 2;
+                    final spriteW = (quixoteSprite?.width ?? 32).toDouble();
+                    final spriteH = (quixoteSprite?.height ?? 32).toDouble();
+                    final hasKey = client['hasKey'] == true;
+                    
+                    final isMoving = (client['isMovingLeft'] == true) || (client['isMovingRight'] == true);
+                    final movingLeft = client['isMovingLeft'] == true;
+
+                    final quixoteAnimDef = widget.animationsData?.findById(isMoving ? 'anim_1776702668697288' : 'anim_1776702618726446');
+                    final anchorX = quixoteAnimDef?.anchorX ?? 0.5;
+                    final anchorY = quixoteAnimDef?.anchorY ?? 0.5;
+
+                    return Positioned(
+                      // 3. Añade la key al Positioned principal
+                      key: ValueKey(uniqueId),
+                      left: pixelX - spriteW * anchorX,
+                      top: pixelY - spriteH * anchorY,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            client['name'] as String,
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.blue),
+                          ),
+                          Stack(
+                            clipBehavior: Clip.none,
+                            alignment: Alignment.topCenter,
+                            children: [
+                              _AnimatedSpriteById(
+                                animationsData: widget.animationsData,
+                                idleAnimId: 'anim_1776702618726446',
+                                walkAnimId: 'anim_1776702668697288',
+                                isMoving: isMoving,
+                                flipX: movingLeft,
+                                displayWidth: spriteW,
+                                displayHeight: spriteH,
+                              ),
+                              if (hasKey && keySprite != null)
+                                Positioned(
+                                  top: -keySprite.height.toDouble(),
+                                  child: _buildStaticSpriteOrAnim(keySprite, keySprite.width.toDouble(), keySprite.height.toDouble()),
+                                ),
+                            ],
+                          ),
+                        ],
                       ),
-                      size: Size(viewportWidth, viewportHeight),
                     );
                   }),
-
-                // ── 3. Sprites estáticos (door, key, etc.) ────────
-                ...staticSprites.map((sprite) {
-                  final loadedAnim = sprite.animationId.isNotEmpty
-                      ? _animCache[sprite.animationId]
-                      : null;
-
-                  // Gestionando door especificamente, si la llave no está cogida está cerrada, si está cogida se muestra abierta
-                  // La animación es door_animation, el primer frame es cerrada y el segundo es abierta
-                  if (sprite.type == 'door' && loadedAnim != null) {
-                    final doorAnimDef = widget.animationsData
-                        ?.findById(sprite.animationId);
-                    if (doorAnimDef != null) {
-                      final frameIndex = isDoorOpen ? 1 : 0;
-                      return Positioned(
-                        left: sprite.x.toDouble() -
-                            sprite.width.toDouble() *
-                                (doorAnimDef.anchorX),
-                        top: sprite.y.toDouble() -
-                            sprite.height.toDouble() *
-                                (doorAnimDef.anchorY),
-                        child: CustomPaint(
-                          painter: _SpritePainter(
-                            loadedAnim: loadedAnim,
-                            frame: frameIndex,
-                            flipX: sprite.flipX,
-                            flipY: sprite.flipY,
-                          ),
-                          size: Size(sprite.width.toDouble(),
-                              sprite.height.toDouble()),
-                        ),
-                      );
-                    }
-                  }
-
-                  return Positioned(
-                    left: sprite.x.toDouble() -
-                        sprite.width.toDouble() *
-                            (loadedAnim?.def.anchorX ?? 0.5),
-                    top: sprite.y.toDouble() -
-                        sprite.height.toDouble() *
-                            (loadedAnim?.def.anchorY ?? 0.5),
-                    child: loadedAnim != null
-                        ? _AnimatedSprite(
-                            loadedAnim: loadedAnim,
-                            displayWidth: sprite.width.toDouble(),
-                            displayHeight: sprite.height.toDouble(),
-                            flipX: sprite.flipX,
-                            flipY: sprite.flipY,
-                          )
-                        : _buildStaticSprite(
-                            'assets/${sprite.imageFile}',
-                            sprite.width.toDouble(),
-                            sprite.height.toDouble(),
-                          ),
-                  );
-                }),
-
-                // ── 4. Clientes dinámicos del WebSocket ───────────
-                ...widget.clients.map((client) {
-                  // Verificamos si el jugador ya completó el nivel
-                  final hasCompleted = client['hasCompletedLevel'] == true;
-
-                  // Si lo ha completado, devolvemos un widget vacío para que no se renderice
-                  if (hasCompleted) {
-                    return const SizedBox.shrink();
-                  }
-
-                  final pixelX = (client['x'] as num).toDouble();
-                  final pixelY = (client['y'] as num).toDouble() - (quixoteSprite?.height.toDouble() ?? 32) / 2;
-                  final spriteW = (quixoteSprite?.width ?? 32).toDouble();
-                  final spriteH = (quixoteSprite?.height ?? 32).toDouble();
-                  final hasKey = client['hasKey'] == true;
-                  
-                  // ... resto de tu lógica de movimiento y animación ...
-                  final isMovingLeft = client['isMovingLeft'] == true;
-                  final isMovingRight = client['isMovingRight'] == true;
-                  final isMoving = isMovingLeft || isMovingRight;
-                  final movingLeft = isMovingLeft;
-
-                  final animId = isMoving
-                      ? 'anim_1776702668697288' // quixote_walk
-                      : 'anim_1776702618726446'; // quixote_idle
-
-                  final quixoteAnimDef = widget.animationsData?.findById(animId);
-                  final anchorX = quixoteAnimDef?.anchorX ?? 0.5;
-                  final anchorY = quixoteAnimDef?.anchorY ?? 0.5;
-
-                  return Positioned(
-                    left: pixelX - spriteW * anchorX,
-                    top: pixelY - spriteH * anchorY,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          client['name'] as String,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                            color: Colors.blue,
-                          ),
-                        ),
-                        Stack(
-                          clipBehavior: Clip.none,
-                          alignment: Alignment.topCenter,
-                          children: [
-                            _AnimatedSpriteById(
-                              animationsData: widget.animationsData,
-                              idleAnimId: 'anim_1776702618726446',
-                              walkAnimId: 'anim_1776702668697288',
-                              isMoving: isMoving,
-                              flipX: movingLeft,
-                              displayWidth: spriteW,
-                              displayHeight: spriteH,
-                            ),
-                            if (hasKey && keySprite != null)
-                              Positioned(
-                                top: -keySprite.height.toDouble(),
-                                child: _buildStaticSpriteOrAnim(
-                                  keySprite,
-                                  keySprite.width.toDouble(),
-                                  keySprite.height.toDouble(),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  );
-                }),
-              ],
+                  ],
+                ),
+              ),
             ),
           ),
         );
@@ -701,17 +661,13 @@ class _GameScenarioState extends State<GameScenario> {
         path,
         fit: BoxFit.cover,
         filterQuality: FilterQuality.none,
-        errorBuilder: (_, __, ___) =>
-            Icon(Icons.broken_image, size: width, color: Colors.grey),
+        errorBuilder: (_, __, ___) => Icon(Icons.broken_image, size: width, color: Colors.grey),
       ),
     );
   }
 
-  Widget _buildStaticSpriteOrAnim(
-      Sprite sprite, double width, double height) {
-    final loadedAnim = sprite.animationId.isNotEmpty
-        ? _animCache[sprite.animationId]
-        : null;
+  Widget _buildStaticSpriteOrAnim(Sprite sprite, double width, double height) {
+    final loadedAnim = sprite.animationId.isNotEmpty ? _animCache[sprite.animationId] : null;
     if (loadedAnim != null) {
       return _AnimatedSprite(
         loadedAnim: loadedAnim,
