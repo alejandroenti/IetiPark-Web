@@ -252,6 +252,117 @@
           "hitBoxes": []
         }
       ]
+    },
+    {
+      "id": "anim_1777487015487056",
+      "name": "lever",
+      "mediaFile": "media/pixilart-sprite - Kopi.png",
+      "startFrame": 0,
+      "endFrame": 4,
+      "fps": 12.0,
+      "loop": false,
+      "groupId": "__main__",
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "anchorColor": "red",
+      "hitBoxes": [
+        {
+          "id": "__hb_1777487020646562_0",
+          "name": "Hit Box 1",
+          "color": "green",
+          "x": 0.421875,
+          "y": 0.125,
+          "width": 0.15625,
+          "height": 0.5
+        }
+      ],
+      "frameRigs": [
+        {
+          "frame": 0,
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "anchorColor": "red",
+          "hitBoxes": [
+            {
+              "id": "__hb_1777487020646562_0",
+              "name": "Hit Box 1",
+              "color": "green",
+              "x": 0.421875,
+              "y": 0.125,
+              "width": 0.15625,
+              "height": 0.5
+            }
+          ]
+        },
+        {
+          "frame": 1,
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "anchorColor": "red",
+          "hitBoxes": [
+            {
+              "id": "__hb_1777487020646562_0",
+              "name": "Hit Box 1",
+              "color": "green",
+              "x": 0.421875,
+              "y": 0.125,
+              "width": 0.15625,
+              "height": 0.5
+            }
+          ]
+        },
+        {
+          "frame": 2,
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "anchorColor": "red",
+          "hitBoxes": [
+            {
+              "id": "__hb_1777487020646562_0",
+              "name": "Hit Box 1",
+              "color": "green",
+              "x": 0.421875,
+              "y": 0.125,
+              "width": 0.15625,
+              "height": 0.5
+            }
+          ]
+        },
+        {
+          "frame": 3,
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "anchorColor": "red",
+          "hitBoxes": [
+            {
+              "id": "__hb_1777487020646562_0",
+              "name": "Hit Box 1",
+              "color": "green",
+              "x": 0.421875,
+              "y": 0.125,
+              "width": 0.15625,
+              "height": 0.5
+            }
+          ]
+        },
+        {
+          "frame": 4,
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "anchorColor": "red",
+          "hitBoxes": [
+            {
+              "id": "__hb_1777487020646562_0",
+              "name": "Hit Box 1",
+              "color": "green",
+              "x": 0.421875,
+              "y": 0.125,
+              "width": 0.15625,
+              "height": 0.5
+            }
+          ]
+        }
+      ]
     }
   ]
 }

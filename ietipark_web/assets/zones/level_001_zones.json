@@ -61,6 +61,28 @@
       "height": 64,
       "color": "blue",
       "groupId": "__main__"
+    },
+    {
+      "name": "ground",
+      "type": "Default",
+      "gameplayData": "",
+      "x": 416,
+      "y": 352,
+      "width": 256,
+      "height": 32,
+      "color": "blue",
+      "groupId": "__main__"
+    },
+    {
+      "name": "ground",
+      "type": "Default",
+      "gameplayData": "",
+      "x": 960,
+      "y": 192,
+      "width": 64,
+      "height": 160,
+      "color": "blue",
+      "groupId": "__main__"
     }
   ]
 }
